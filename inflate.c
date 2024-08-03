@@ -735,9 +735,10 @@ int flush;
                 copy = state->length;
                 if (copy > have) copy = have;
                 if (copy) {
+                    len = state->head->extra_len - state->length;
                     if (state->head != Z_NULL &&
-                        state->head->extra != Z_NULL) {
-                        len = state->head->extra_len - state->length;
+                        state->head->extra != Z_NULL &&
+                        len < state->head->extra_max) {
                         zmemcpy(state->head->extra + len, next,
                                 len + copy > state->head->extra_max ?
                                 state->head->extra_max - len : copy);
@@ -1504,9 +1505,10 @@ z_streamp strm;
 {
     struct inflate_state FAR *state;
 
-    if (strm == Z_NULL || strm->state == Z_NULL) return -1L << 16;
+    if (strm == Z_NULL || strm->state == Z_NULL)
+        return -(1L << 16);
     state = (struct inflate_state FAR *)strm->state;
-    return ((long)(state->back) << 16) +
+    return (long)(((unsigned long)((long)state->back)) << 16) +
         (state->mode == COPY ? state->length :
             (state->mode == MATCH ? state->was - state->length : 0));
 }
